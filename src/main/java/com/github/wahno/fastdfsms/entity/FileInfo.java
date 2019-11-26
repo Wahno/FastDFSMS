@@ -1,11 +1,14 @@
 package com.github.wahno.fastdfsms.entity;
 
 import com.alibaba.fastjson.annotation.JSONField;
-import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Builder;
 import lombok.Data;
 import lombok.experimental.Tolerate;
 
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.Table;
 import java.sql.Timestamp;
 
 /**
@@ -15,14 +18,17 @@ import java.sql.Timestamp;
  */
 @Data
 @Builder
-@TableName("t_file_info")
+@Entity
+@Table(name = "file_info")
 public class FileInfo {
 
     /**
      * 文件ID
      */
+    @Id
+    @GeneratedValue
     @JSONField(name = "id")
-    private String id;
+    private Long id;
     /**
      * 文件组
      */
