@@ -31,6 +31,7 @@ public class FileInfoTest {
                 log.debug(JSON.toJSONString(temp));
             }
         }
+        fileInfoRepository.deleteById(fileInfo.getId());
 
     }
 }

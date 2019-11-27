@@ -8,6 +8,17 @@ spring:
     show-sql: true
     hibernate:
       ddl-auto: update
+  servlet:
+    multipart:
+      max-file-size: 1000MB
+      max-request-size: 1000MB
+fdfs:
+  so-timeout: 1500
+  connect-timeout: 600
+  #TrackerList参数,支持多个
+  tracker-list:
+    - 192.168.138.138:22122
+
 logging:
   level:
     com.github.wahno.fastdfsms: debug
