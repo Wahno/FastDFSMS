@@ -62,11 +62,7 @@ public class FileFacadeImpl implements FileFacade {
             this.fileInfo = fileInfo;
         }
     }
-    private Queue<DownloadFileFuture> asyncDownload(List<String> idList) throws FileException {
-        List<FileInfo> fileInfoList = new ArrayList<>();
-        for(String id : idList){
-            fileInfoList.add(fileInfoService.find(Long.valueOf(id)));
-        }
+    private Queue<DownloadFileFuture> asyncDownload(List<FileInfo> fileInfoList) {
         Queue<DownloadFileFuture> downloadFileFutureQueue = new LinkedList<>();
         //并发点
         for(FileInfo fileInfo : fileInfoList){
@@ -77,7 +73,7 @@ public class FileFacadeImpl implements FileFacade {
     }
     @Override
     public List<DownloadFile> download(List<String> idList) throws FileException {
-        Queue<DownloadFileFuture> downloadFileFutureList = asyncDownload(idList);
+        Queue<DownloadFileFuture> downloadFileFutureList = asyncDownload(getListByIds(idList));
         List<DownloadFile> downloadFileList = new ArrayList<>();
         //汇合点
         try {
@@ -96,16 +92,19 @@ public class FileFacadeImpl implements FileFacade {
 
     @Override
     public void streamAttachmentDownload(HttpServletResponse response, List<String> idList, String fileName) throws IOException, FileException {
-        Map<String,Integer> fileNameMap = new HashMap<>(idList.size()/2);
-        Queue<DownloadFileFuture> downloadFileFutureList = asyncDownload(idList);
-        OutputStream out = DownloadUtil.getAttachmentDownloadStream(response,fileName);
+        Map<String,Integer> fileNameMap = new HashMap<>(idList.size());
+        List<FileInfo> fileInfoList = getListByIds(idList);
+        Queue<DownloadFileFuture> downloadFileFutureList = asyncDownload(fileInfoList);
+        OutputStream out = DownloadUtil.getAttachmentDownloadStream(response,fileName,getFileListFileSize(fileInfoList));
         ZipOutputStream zip = new ZipOutputStream(out);
         //汇合点
         try {
             while (!downloadFileFutureList.isEmpty()){
                 DownloadFileFuture downloadFileFuture = downloadFileFutureList.poll();
                 //这里直接写入response
-                ZipUtil.appendZipfile(zip,fileNameMap,new DownloadFile(downloadFileFuture.fileFutureByte.get(),downloadFileFuture.fileInfo.getName()));
+                ZipUtil.appendZipfile(zip,fileNameMap,
+                        new DownloadFile(downloadFileFuture.fileFutureByte.get(),
+                                downloadFileFuture.fileInfo.getName()));
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -113,6 +112,21 @@ public class FileFacadeImpl implements FileFacade {
             e.printStackTrace();
         }
         zip.close();
+    }
+
+    public List<FileInfo> getListByIds(List<String> idList) throws FileException {
+        List<FileInfo> fileInfoList = new ArrayList<>();
+        for(String id : idList){
+            fileInfoList.add(fileInfoService.find(Long.valueOf(id)));
+        }
+        return fileInfoList;
+    }
+    private Long getFileListFileSize(List<FileInfo> fileInfoList){
+        Long size = 0L;
+        for (FileInfo fileInfo : fileInfoList){
+            size += fileInfo.getSize();
+        }
+        return size;
     }
 
     @Override
